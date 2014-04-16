@@ -8,67 +8,60 @@ use Bio::DB::GenBank;
 $db_obj = Bio::DB::GenBank->new;
 
 #Creates sequence obj from GenBank ac#
-$seq_obj = $db_obj->get_Seq_by_acc(M87280);
+$ac_num = "M87280"; #AC number for Pantoea agglomeran 
+$ac_num = "AAA64977"; #AC number for crtE
+$seq_obj = $db_obj->get_Seq_by_acc($ac_num);
+$type = $seq_obj->alphabet;
 
-#Finds the genes in the sequence and stores their feature objects in an array
-my @genes = grep { $_->primary_tag eq 'gene'} $seq_obj->all_SeqFeatures();
+if ($type eq"dna") {
 
-#Create an array (@gene_names) containing the names of each gene in the sequence.
-for my $feat_obj (@genes) {	
-	#print "primary tag: " . $feat_obj->primary_tag . "\n";
-	for my $value ($feat_obj->get_tag_values("gene")) {
-		push (@gene_names, $value); 
-		#print "     value: " . $value . "\n";	
-	}	
-}
+	#Finds the genes in the sequence and stores their feature objects in an array
+	my @genes = grep { $_->primary_tag eq 'gene'} $seq_obj->all_SeqFeatures();
 
-#Finds the CDS objects in the sequence and stores their feature objects in an array
-my @CDS_feats = grep { $_->primary_tag eq 'CDS'} $seq_obj->all_SeqFeatures();
-#Create an array containing a CDS feature object for each gene
-for my $name (@gene_names){	
-	my @f = grep {  my @a = $_->has_tag('gene') ? $_->each_tag_value('gene') : (); 
-                                          grep { /$name/ } @a;  }  @CDS_feats;
-	$f = @f[0]; #*WILL WE EVER HAVE MULTIPLE GENES IN SAME NAME AND SEQUENCE???????*
-	$genes_CDS{$name} = $f;
-	print "***" . $name . "***" . ":  " . "\n";
-	print "primary tag: " . $f->primary_tag . "\n";
-	for my $tag ($f->get_all_tags) {
-		print " tag:" . $tag . "\n";
-		for my $value ($f->get_tag_values($tag)) {
-			print "     value: " . $value . "\n";
+	#Create an array (@gene_names) containing the names of each gene in the sequence.
+	for my $feat_obj (@genes) {	
+		#print "primary tag: " . $feat_obj->primary_tag . "\n";
+		for my $value ($feat_obj->get_tag_values("gene")) {
+			push (@gene_names, $value); 
+			#print "     value: " . $value . "\n";	
+		}	
+	}
+	
+	#Finds the CDS objects in the sequence and stores their feature objects in an array
+	my @CDS_feats = grep { $_->primary_tag eq 'CDS'} $seq_obj->all_SeqFeatures();
+	#Create an array containing a CDS feature object for each gene
+	for my $name (@gene_names){	
+		#print "test" . $name . "\n";	
+		my @f = grep {  my @a = $_->has_tag('gene') ? $_->each_tag_value('gene') : (); 
+	                                          grep { /$name/ } @a;  }  @CDS_feats;
+		$f = @f[0]; #*WILL WE EVER HAVE MULTIPLE GENES IN SAME NAME AND SEQUENCE???????*
+		$genes_CDS{$name} = $f;
+		#print "***" . $name . "***" . ":  " . "\n";
+		#print "primary tag: " . $f->primary_tag . "\n";
+		for my $tag ($f->get_all_tags) {
+			#print " tag:" . $tag . "\n";
+			for my $value ($f->get_tag_values($tag)) {
+				#print "     value: " . $value . "\n";
+			}
+		}
+		#print "\n\n";
+	}
+	#Creates a Sequence object for each above gene's corresponding Protein 
+	for my $name (@gene_names){
+		$f = $genes_CDS{$name};
+		for my $prot_id ($f->get_tag_values("protein_id")) {
+			print $prot_id . "\n";	
+			#RECURRSION, ENTERING EACH PROTEIN INTO THE SCRIPT
+			push (@prot_ids, $prot_id);
+			$prot_so = $db_obj->get_Seq_by_version($prot_id);		
 		}
 	}
-	print "\n\n";
-}
-for my $name (@gene_names){
-	#print $name. ":  " . $genes_CDS{$name} . "\n";
-}
+	
+}	
+elsif ($type eq "protein") {
+	print "Hello, World?\n";
+}	
+	
+	
 
 
-
-
-
-
-
-=begin comment
-for comment
-my @f_with_crtE = grep { 		#get all features filtering for those with crtE tag
-	my @a = $_->has_tag('gene') ? $_->each_tag_value('gene') : (); grep {/crtE/ } @a; 
-} $seq_obj->all_SeqFeatures();
-
-print @f_with_crtE;
-foreach $feat (@f_with_crtE) {
-	print $function . "\n";
-}
-=end comment
-%seq = (#Hash table for seq info
-	"locName" => $seq_obj->display_name,	#locus name
-	"id" => $seq_obj->display_id, 		#seq id
-	"ac" => $seq_obj->accession_number, 	#accession number
-	"desc" => $seq_obj->desc,		#description
-);
-
-
-#@seq_feat = $seq_obj->get_SeqFeatures;
-
-#print  $seq_obj->display_id. "\n";
