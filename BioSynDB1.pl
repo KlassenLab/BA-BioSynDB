@@ -59,8 +59,54 @@ if ($type eq"dna") {
 	
 }	
 elsif ($type eq "protein") {
-	print "Hello, World?\n";
-}	
+	my $p_annos = $seq_obj->annotation;
+	for my $key ( $p_annos->get_all_annotation_keys ) {
+		my @annotations = $p_annos->get_Annotations($key);
+		for my $value ( @annotations ) {
+			#print "tagname : ", $value->tagname, "\n";
+      			# $value is an Bio::Annotation, and also has an "as_text" method
+      			#print "  annotation value: ", $value->display_text, "\n";
+  		}
+	}
+	
+	
+	@p_fs = $seq_obj->get_SeqFeatures(); 
+	for my $f (@p_fs){
+		$spliced_seq = $f->spliced_seq()->seq;
+		#The AA sequence for the current feat. object
+		$f_loc = $f->location;
+		#The location object of the current feature
+		if ( $f_loc->isa('Bio::Location::SplitLocationI')
+               				&& $f->primary_tag eq 'CDS' )  {
+			print "primary tag: " . $f->primary_tag. "   ";
+    			for my $location( $f->location->sub_Location ) {
+				$seq_cord = $seq_cord.$f_loc->start. ".." . $f_loc->end . ",  ";
+     			}
+			print "\n";
+		}
+		else {
+			$seq_cord = $f_loc->start . ".." . $f_loc->end;
+			
+		}
+		print "primary tag: " . $f->primary_tag. "   " . $seq_cord . "\n";
+		for my $tag ($f->get_all_tags){
+			print "   tag: " . $tag . "\n";
+			for my $value ($f->get_tag_values($tag)) {
+				print "\t value: " . $value . "\n";
+			}
+		} 
+		print "\t sequence: " . $spliced_seq . "\n\n";	
+	}
+	@references = $p_annos->get_Annotations("reference");
+	#Stores all references in an array
+	$n = 1;
+	print "References: \n";
+	for my $reference (@references){
+		print "{".$n."}\n\t Title: " . $reference->title . "\n\t Authors: " . 				$reference->authors . "\n\t Pubmed id: " . $reference->pubmed . "\n";
+		#Prints the current count number and the title, author, and pubmed id for the associated reference		
+		$n++;
+	} 	
+}
 	
 	
 
