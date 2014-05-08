@@ -70,7 +70,8 @@ elsif ($type eq "protein") {
 	}
 	
 	
-	@p_fs = $seq_obj->get_SeqFeatures(); 
+	@p_fs = $seq_obj->get_SeqFeatures();
+	$num_feats = 0; 
 	for my $f (@p_fs){
 		$spliced_seq = $f->spliced_seq()->seq;
 		#The AA sequence for the current feat. object
@@ -78,11 +79,11 @@ elsif ($type eq "protein") {
 		#The location object of the current feature
 		if ( $f_loc->isa('Bio::Location::SplitLocationI')
                				&& $f->primary_tag eq 'CDS' )  {
-			print "primary tag: " . $f->primary_tag. "   ";
     			for my $location( $f->location->sub_Location ) {
 				$seq_cord = $seq_cord.$f_loc->start. ".." . $f_loc->end . ",  ";
      			}
 			print "\n";
+			#creates a string "$seq_cord" with the start and end location of the current feature
 		}
 		else {
 			$seq_cord = $f_loc->start . ".." . $f_loc->end;
@@ -95,7 +96,9 @@ elsif ($type eq "protein") {
 				print "\t value: " . $value . "\n";
 			}
 		} 
-		print "\t sequence: " . $spliced_seq . "\n\n";	
+		print "\t sequence: " . $spliced_seq . "\n\n";
+		$num_feats++;
+		
 	}
 	@references = $p_annos->get_Annotations("reference");
 	#Stores all references in an array
@@ -106,6 +109,7 @@ elsif ($type eq "protein") {
 		#Prints the current count number and the title, author, and pubmed id for the associated reference		
 		$n++;
 	} 	
+	
 }
 	
 	
